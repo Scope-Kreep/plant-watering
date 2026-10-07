@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-pi:
+    name: Build Pi
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Build
+        working-directory: pi
+        run: cross build --release --target aarch64-unknown-linux-gnu
+
+      - name: Package
+        run: |
+          mkdir release
+          cp pi/target/aarch64-unknown-linux-gnu/release/pi \
+            release/plant-watering-aarch64
+
+      - name: Upload artifact
+        uses: action/upload-artifact@v7
+        with:
+          name: pi
+          path: release/plant-watering-aarch64
+
+  release:
+    name: Create GitHub Release
+    needs:
+      - build-pi
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: pi
+          path: release
+
+      - name: Create release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            release/plant-watering-aarch64
