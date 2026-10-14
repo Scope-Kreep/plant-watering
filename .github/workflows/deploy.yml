@@ -1,0 +1,91 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "pi/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TARGET: aarch64-unknown-linux-gnu
+  BIN: plant-web
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      pi: ${{ github.event_name == 'workflow_dispatch' || steps.f.outputs.pi == 'true' || steps.f.outputs.workflow == 'true' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
+        id: f
+        with:
+          filters: |
+            pi: 'pi/**'
+            workflow: '.github/workflows/deploy.yml'
+
+  web:
+    needs: changes
+    if: needs.changes.outputs.pi == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pi
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ env.TARGET }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: pi
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cross
+      - run: cross build --release --target $TARGET
+      - run: cp target/$TARGET/release/$BIN ./$BIN
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pi
+          path: pi/${{ env.BIN }}
+
+  deploy:
+    needs: web
+    if: ${{ !cancelled() && !failure() }}
+    runs-on: [self-hosted, plant-watering]
+    concurrency: deploy
+    env:
+      SERVICE: plant-web
+      INSTALL_PATH: /opt/plant/plant-web
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Deploy
+        run: |
+          set -euo pipefail
+          [ -f "$INSTALL_PATH" ] && cp "$INSTALL_PATH" "$INSTALL_PATH.prev" || true
+
+          rollback() {
+            echo "deploy failed, restoring previous binary"
+            [ -f "$INSTALL_PATH.prev" ] && install -m 755 "$INSTALL_PATH.prev" "$INSTALL_PATH"
+            sudo systemctl start "$SERVICE"
+          }
+          trap rollback ERR
+
+          sudo systemctl stop "$SERVICE"
+
+          if [ -f "dist/$BIN" ]; then
+            install -m 755 "dist/$BIN" "$INSTALL_PATH"
+          fi
+
+          sudo systemctl start "$SERVICE"
+
+          sleep 3
+          systemctl is-active --quiet "$SERVICE"
