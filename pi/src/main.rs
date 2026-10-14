@@ -1,6 +1,8 @@
-use std::{error::Error, future};
+use std::error::Error;
 
 use sqlx::{SqlitePool, migrate::Migrator, sqlite::SqliteConnectOptions};
+
+mod app;
 
 static MIGRATOR: Migrator = sqlx::migrate!();
 
@@ -14,5 +16,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     MIGRATOR.run(&pool).await?;
 
-    future::pending().await
+    topcoat::start(app::router().build()).await.unwrap();
+
+    Ok(())
 }
