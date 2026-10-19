@@ -113,7 +113,9 @@ jobs:
           sudo systemctl stop "$SERVICE"
 
           if [ -f dist/firmware.hex ]; then
-            avrdude -p atmega32u4 -c avr109 -P "$PORT" -b "$BAUD" -r -D \
+            stty -F "$PORT" 1200
+            sleep 2
+            avrdude -p atmega32u4 -c avr109 -P "$PORT" -b "$BAUD" -D \
               -U flash:w:dist/firmware.hex:i
           fi
 
