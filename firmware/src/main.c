@@ -3,6 +3,7 @@
 const int stepPin = 2;
 const int dirPin = 3;
 const int pulseLength = 5;
+const int stepDuration = 500;
 
 void setup() {
   pinMode(stepPin, OUTPUT);
@@ -16,7 +17,7 @@ void loop() {
     digitalWrite(stepPin, HIGH);
     delayMicroseconds(pulseLength);
     digitalWrite(stepPin, LOW);
-    delayMicroseconds(pulseLength);
+    delayMicroseconds(stepDuration);
   }
   delay(1000);
 
@@ -25,7 +26,7 @@ void loop() {
     digitalWrite(stepPin, HIGH);
     delayMicroseconds(pulseLength);
     digitalWrite(stepPin, LOW);
-    delayMicroseconds(pulseLength);
+    delayMicroseconds(stepDuration);
   }
   delay(1000);
 }
