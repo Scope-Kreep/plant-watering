@@ -3,7 +3,7 @@
 const int stepPin = 2;
 const int dirPin = 3;
 const int pulseLength = 5;
-const int stepDuration = 500;
+const int stepDuration = 750;
 
 void setup() {
   pinMode(stepPin, OUTPUT);
