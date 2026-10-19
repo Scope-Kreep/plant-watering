@@ -2,6 +2,7 @@
 
 const int stepPin = 2;
 const int dirPin = 3;
+const int pulseLength = 5;
 
 void setup() {
   pinMode(stepPin, OUTPUT);
@@ -13,18 +14,18 @@ void loop() {
 
   for (int x = 0; x < 200; x++) {
     digitalWrite(stepPin, HIGH);
-    delayMicroseconds(500);
+    delayMicroseconds(pulseLength);
     digitalWrite(stepPin, LOW);
-    delayMicroseconds(500);
+    delayMicroseconds(pulseLength);
   }
   delay(1000);
 
   digitalWrite(dirPin, LOW);
   for (int x = 0; x < 400; x++) {
     digitalWrite(stepPin, HIGH);
-    delayMicroseconds(500);
+    delayMicroseconds(pulseLength);
     digitalWrite(stepPin, LOW);
-    delayMicroseconds(500);
+    delayMicroseconds(pulseLength);
   }
   delay(1000);
 }
