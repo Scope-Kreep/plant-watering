@@ -52,11 +52,11 @@ jobs:
           python-version: "3.14"
       - run: pip install --upgrade platformio
       - run: pio run
-      - run: cp .pio/build/*/firmware.hex nano-firmware.hex
+      - run: cp .pio/build/*/firmware.hex firmware.hex
       - uses: actions/upload-artifact@v7
         with:
           name: firmware
-          path: firmware/nano-firmware.hex
+          path: firmware/firmware.hex
 
   web:
     needs: changes
@@ -92,7 +92,6 @@ jobs:
       SERVICE: plant-web
       INSTALL_PATH: /opt/plant/plant-web
       PORT: /dev/serial/by-id/usb-Arduino_LLC_Arduino_Leonardo-if00
-      BAUD: 57600
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -112,9 +111,9 @@ jobs:
 
           sudo systemctl stop "$SERVICE"
 
-          if [ -f dist/nano-firmware.hex ]; then
-            avrdude -p atmega328p -c arduino -P "$PORT" -b "$BAUD" -D \
-              -U flash:w:dist/nano-firmware.hex:i
+          if [ -f dist/firmware.hex ]; then
+            avrdude -p atmega32u4 -c avr109 -P "$PORT" -b "$BAUD" -r -D \
+              -U flash:w:dist/firmware.hex:i
           fi
 
           if [ -f "dist/$BIN" ]; then
