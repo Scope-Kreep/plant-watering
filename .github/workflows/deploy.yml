@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "pi/**"
+      - "firmware/**"
       - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
@@ -19,6 +20,7 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
+      firmware: ${{ github.event_name == 'workflow_dispatch' || steps.f.outputs.firmware == 'true' || steps.f.outputs.workflow == 'true' }}
       pi: ${{ github.event_name == 'workflow_dispatch' || steps.f.outputs.pi == 'true' || steps.f.outputs.workflow == 'true' }}
     steps:
       - uses: actions/checkout@v7
@@ -26,8 +28,35 @@ jobs:
         id: f
         with:
           filters: |
+            firmware: 'firmware/**'
             pi: 'pi/**'
             workflow: '.github/workflows/deploy.yml'
+
+  firmware:
+    needs: changes
+    if: needs.changes.outputs.firmware == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: firmware
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - run: pip install --upgrade platformio
+      - run: pio run
+      - run: cp .pio/build/*/firmware.hex nano-firmware.hex
+      - uses: actions/upload-artifact@v7
+        with:
+          name: firmware
+          path: firmware/nano-firmware.hex
 
   web:
     needs: changes
@@ -55,13 +84,15 @@ jobs:
           path: pi/${{ env.BIN }}
 
   deploy:
-    needs: web
+    needs: [firmware, web]
     if: ${{ !cancelled() && !failure() }}
     runs-on: [self-hosted, plant-watering]
     concurrency: deploy
     env:
       SERVICE: plant-web
       INSTALL_PATH: /opt/plant/plant-web
+      PORT: /dev/serial/by-id/usb-Arduino_LLC_Arduino_Leonardo-if00
+      BAUD: 57600
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -80,6 +111,11 @@ jobs:
           trap rollback ERR
 
           sudo systemctl stop "$SERVICE"
+
+          if [ -f dist/nano-firmware.hex ]; then
+            avrdude -p atmega328p -c arduino -P "$PORT" -b "$BAUD" -D \
+              -U flash:w:dist/nano-firmware.hex:i
+          fi
 
           if [ -f "dist/$BIN" ]; then
             install -m 755 "dist/$BIN" "$INSTALL_PATH"

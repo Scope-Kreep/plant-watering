@@ -1,30 +1,42 @@
-name: CI
+name: ci
 
 on:
   pull_request:
 
 jobs:
-  pi:
-    name: Pi
+  firmware:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: firmware
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - run: pip install --upgrade platformio
+      - run: pio run
 
+  web:
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: pi
 
     steps:
       - uses: actions/checkout@v7
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-
-      - name: Check formatting
-        run: cargo fmt --check
-
-      - name: Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
-
-      - name: Test
-        run: cargo test --all-features
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: pi
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+      - run: cargo test --all-features
