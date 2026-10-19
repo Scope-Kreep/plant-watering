@@ -1,9 +1,9 @@
 #include "Arduino.h"
 
-const int stepPin = 2;
-const int dirPin = 3;
+const int stepPin = 3;
+const int dirPin = 2;
 const int pulseLength = 5;
-const int stepDuration = 750;
+const int stepDuration = 1000;
 
 void setup() {
   pinMode(stepPin, OUTPUT);
