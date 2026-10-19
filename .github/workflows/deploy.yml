@@ -92,6 +92,7 @@ jobs:
       SERVICE: plant-web
       INSTALL_PATH: /opt/plant/plant-web
       PORT: /dev/serial/by-id/usb-Arduino_LLC_Arduino_Leonardo-if00
+      BAUD: 57600
     steps:
       - uses: actions/download-artifact@v8
         with:
