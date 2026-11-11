@@ -1,6 +1,5 @@
 #include "pump.h"
 #include "Arduino.h"
-#include "stdint.h"
 
 namespace {
 constexpr uint8_t kStepPin = 2;
@@ -93,12 +92,6 @@ void Pump::configure() {
 void Pump::run(long steps, Reading &result) {
   digitalWrite(kDirPin, kForward ? HIGH : LOW);
 
-  uint16_t sgMin = 0xFFFF;
-  uint16_t sgMax = 0;
-
-  uint8_t csMin = 0xFF;
-  uint8_t csMax = 0;
-
   const long rampSteps = min(kRampSteps, steps / 2);
 
   for (long i = 0; i < steps; ++i) {
@@ -117,23 +110,12 @@ void Pump::run(long steps, Reading &result) {
     digitalWrite(kStepPin, LOW);
     delayMicroseconds(period - kStepHighUs);
 
-    if ((i + 1) % kLoadSampleEvery == 0 || i == steps - 1) {
-      const uint16_t sg = driver_.SG_RESULT();
-      const uint8_t cs = (driver_.DRV_STATUS() >> 16) & 0x1F;
-
-      sgMin = min(sg, sgMin);
-      sgMax = max(sg, sgMax);
-
-      csMin = min(cs, csMin);
-      csMax = max(cs, csMax);
+    if (((kLoadSampleEvery > 0 && (i + 1) % kLoadSampleEvery == 0) ||
+         i == steps - 1) &&
+        result.sgSampleCount < kMaxLoadSamples) {
+      result.sgSamples[result.sgSampleCount++] = driver_.SG_RESULT();
     }
   }
-
-  result.stallGuardMin = sgMin;
-  result.stallGuardMax = sgMax;
-
-  result.currentScaleMin = csMin;
-  result.currentScaleMax = csMax;
 }
 
 bool Pump::driverFaulted() {

@@ -34,17 +34,19 @@ void Telemetry::measurement(const Pump::Reading &stepper) const {
   out_.print(F(",\"stepper_tstep\":"));
   out_.print(stepper.stepTime);
 
-  out_.print(F(",\"stepper_sg_min\":"));
-  out_.print(stepper.stallGuardMin);
+  out_.print(F(",\"stepper_cs\":"));
+  out_.print(stepper.currentScale);
 
-  out_.print(F(",\"stepper_sg_max\":"));
-  out_.print(stepper.stallGuardMax);
+  out_.print(F(",\"stepper_sg\":["));
 
-  out_.print(F(",\"stepper_cs_min\":"));
-  out_.print(stepper.currentScaleMin);
+  for (uint8_t i = 0; i < stepper.sgSampleCount; ++i) {
+    if (i > 0)
+      out_.print(',');
 
-  out_.print(F(",\"stepper_cs_max\":"));
-  out_.print(stepper.currentScaleMax);
+    out_.print(stepper.sgSamples[i]);
+  }
+
+  out_.print(']');
 
   out_.print(F("}\n"));
 }
