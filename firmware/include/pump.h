@@ -4,7 +4,7 @@
 #include <TMCStepper.h>
 
 namespace {
-static constexpr uint8_t kMaxLoadSamples = 32;
+static constexpr uint8_t kMaxLoadSamples = 320;
 }
 
 class Pump {
@@ -16,7 +16,7 @@ public:
     uint16_t microstepCounter;
     uint32_t stepTime;
     uint16_t sgSamples[kMaxLoadSamples] = {};
-    uint8_t sgSampleCount = 0;
+    uint16_t sgSampleCount = 0;
   };
 
   Pump(HardwareSerial &uart);
