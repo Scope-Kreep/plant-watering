@@ -7,8 +7,10 @@ class Pump {
 public:
   struct Reading {
     bool success;
-    uint16_t actualCurrentScale;
-    uint16_t stallGuardResult;
+    uint16_t currentScaleMin;
+    uint16_t currentScaleMax;
+    uint16_t stallGuardMin;
+    uint16_t stallGuardMax;
     uint8_t pwmScale;
     uint16_t microstepCounter;
     uint32_t stepTime;
@@ -24,7 +26,7 @@ public:
 
 private:
   void configure();
-  void run(long steps);
+  void run(long steps, Reading &result);
   bool driverFaulted();
 
   HardwareSerial &uart_;

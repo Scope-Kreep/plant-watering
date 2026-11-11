@@ -1,5 +1,6 @@
 #include "pump.h"
 #include "Arduino.h"
+#include "stdint.h"
 
 namespace {
 constexpr uint8_t kStepPin = 2;
@@ -18,8 +19,15 @@ constexpr long kStepsPerRev = kFullStepsPerRev * kMicrosteps;
 constexpr long kPulseSteps = kStepsPerRev;
 
 constexpr bool kForward = true;
-constexpr unsigned int kStepHighUs = 160;
+constexpr unsigned int kStepHighUs = 5;
 constexpr unsigned int kStepLowUs = 160;
+
+constexpr unsigned int kRampSteps = 400;
+
+constexpr long kLoadSampleEvery = 200;
+
+constexpr unsigned int kStartPeriodUs = 2000;
+constexpr unsigned int kRunPeriodUs = kStepHighUs + kStepLowUs;
 } // namespace
 
 Pump::Pump(HardwareSerial &uart)
@@ -60,10 +68,8 @@ Pump::Reading Pump::pulse() {
   }
 
   digitalWrite(kEnPin, LOW);
-  run(kPulseSteps);
+  run(kPulseSteps, result);
 
-  result.actualCurrentScale = driver_.cs_actual();
-  result.stallGuardResult = driver_.SG_RESULT();
   result.pwmScale = driver_.pwm_scale_sum();
   result.microstepCounter = driver_.MSCNT();
   result.stepTime = driver_.TSTEP();
@@ -84,14 +90,50 @@ void Pump::configure() {
   driver_.GSTAT(0b111);
 }
 
-void Pump::run(long steps) {
+void Pump::run(long steps, Reading &result) {
   digitalWrite(kDirPin, kForward ? HIGH : LOW);
+
+  uint16_t sgMin = 0xFFFF;
+  uint16_t sgMax = 0;
+
+  uint8_t csMin = 0xFF;
+  uint8_t csMax = 0;
+
+  const long rampSteps = min(kRampSteps, steps / 2);
+
   for (long i = 0; i < steps; ++i) {
+    const long fromEdge = min(i, steps - 1 - i);
+
+    unsigned int period = kRunPeriodUs;
+
+    if (rampSteps > 0 && fromEdge < rampSteps) {
+      period = kStartPeriodUs -
+               long(kStartPeriodUs - kRunPeriodUs) * fromEdge / rampSteps;
+    }
+
     digitalWrite(kStepPin, HIGH);
     delayMicroseconds(kStepHighUs);
+
     digitalWrite(kStepPin, LOW);
-    delayMicroseconds(kStepLowUs);
+    delayMicroseconds(period - kStepHighUs);
+
+    if ((i + 1) % kLoadSampleEvery == 0 || i == steps - 1) {
+      const uint16_t sg = driver_.SG_RESULT();
+      const uint8_t cs = (driver_.DRV_STATUS() >> 16) & 0x1F;
+
+      sgMin = min(sg, sgMin);
+      sgMax = max(sg, sgMax);
+
+      csMin = min(cs, csMin);
+      csMax = max(cs, csMax);
+    }
   }
+
+  result.stallGuardMin = sgMin;
+  result.stallGuardMax = sgMax;
+
+  result.currentScaleMin = csMin;
+  result.currentScaleMax = csMax;
 }
 
 bool Pump::driverFaulted() {
