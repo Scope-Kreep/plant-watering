@@ -13,7 +13,9 @@ void Controller::begin() {
 
   nextMeasureMs_ = millis();
 
-  if (!pump_.begin()) {
+  const bool pumpOk = pump_.begin();
+  telemetry_.driver(pump_.diagnostics(), pumpOk ? nullptr : pump_.error());
+  if (!pumpOk) {
     enter(State::Fault, pump_.error());
     return;
   }
@@ -32,10 +34,18 @@ void Controller::update() {
     }
     break;
 
+<<<<<<< Updated upstream
   case State::Measure:
+=======
+  case State::Measure: {
+    // temp: kjør pumpen ved hver måling for testing
+    const bool pumpOk = pump_.pulse();
+    telemetry_.driver(pump_.diagnostics(), pumpOk ? nullptr : pump_.error());
+>>>>>>> Stashed changes
     takeMeasurement();
     enter(State::Idle);
     break;
+  }
 
   case State::Fault:
     if (measurementDue()) {

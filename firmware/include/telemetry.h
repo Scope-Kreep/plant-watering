@@ -1,17 +1,18 @@
 #pragma once
 
-#include "moisture.h"
 #include <Arduino.h>
+
+#include "moisture.h"
+#include "pump.h"
 
 class Telemetry {
 public:
-  Telemetry(Serial_ &out);
+  explicit Telemetry(Serial_ &out);
 
   void begin();
-
-  void measurement(const MoistureSensor::Reading &moisture) const;
-
+  void measurement(const MoistureSensor::Reading &soil) const;
   void state(const char *name, const char *reason = nullptr) const;
+  void driver(const Pump::Diag &d, const char *error = nullptr) const;
 
 private:
   Serial_ &out_;
