@@ -23,7 +23,7 @@ constexpr unsigned int kStepLowUs = 160;
 
 constexpr unsigned int kRampSteps = 400;
 
-constexpr long kLoadSampleEvery = 250;
+constexpr long kLoadSampleEvery = kPulseSteps / kMaxLoadSamples;
 
 constexpr unsigned int kStartPeriodUs = 2000;
 constexpr unsigned int kRunPeriodUs = kStepHighUs + kStepLowUs;
