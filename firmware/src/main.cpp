@@ -1,25 +1,14 @@
+#include "controller.h"
 #include "moisture.h"
 #include "pump.h"
 #include "telemetry.h"
 #include <Arduino.h>
 
-MoistureSensor moisture(A3);
+MoistureSensor soil(A3);
 Pump pump(Serial1);
 Telemetry telemetry(Serial);
+Controller controller(soil, pump, telemetry);
 
-void setup() {
-  telemetry.begin();
-  telemetry.state("BOOT");
+void setup() { controller.begin(); }
 
-  if (!pump.begin()) {
-    telemetry.state("FAULT", pump.error());
-    // TODO: go to fault state when FSM exists
-  }
-
-  telemetry.state("MEASURE");
-}
-
-void loop() {
-  telemetry.measurement(moisture.read());
-  delay(1000);
-}
+void loop() { controller.update(); }
