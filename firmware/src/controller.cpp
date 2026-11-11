@@ -51,6 +51,11 @@ void Controller::update() {
     if (measurementDue()) {
       takeMeasurement();
     }
+    if (pump_.error() != nullptr) {
+      if (pump_.begin()) {
+        enter(State::Idle);
+      }
+    }
     break;
   }
 }
