@@ -4,7 +4,7 @@
 #include <TMCStepper.h>
 
 namespace {
-static constexpr uint8_t kMaxLoadSamples = 320;
+static constexpr uint16_t kMaxLoadSamples = 320;
 }
 
 class Pump {
