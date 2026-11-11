@@ -15,7 +15,7 @@ constexpr unsigned long kUartBaud = 115200;
 constexpr long kFullStepsPerRev = 200;
 constexpr long kStepsPerRev = kFullStepsPerRev * kMicrosteps;
 
-constexpr long kPulseSteps = kStepsPerRev;
+constexpr long kPulseSteps = kStepsPerRev * 5;
 
 constexpr bool kForward = true;
 constexpr unsigned int kStepHighUs = 5;
@@ -69,6 +69,7 @@ Pump::Reading Pump::pulse() {
   digitalWrite(kEnPin, LOW);
   run(kPulseSteps, result);
 
+  result.currentScale = driver_.cs_actual();
   result.pwmScale = driver_.pwm_scale_sum();
   result.microstepCounter = driver_.MSCNT();
   result.stepTime = driver_.TSTEP();
