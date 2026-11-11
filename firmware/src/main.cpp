@@ -4,7 +4,7 @@
 #include "telemetry.h"
 #include <Arduino.h>
 
-MoistureSensor soil(A3);
+MoistureSensor soil(A0);
 Pump pump(Serial1);
 Telemetry telemetry(Serial);
 Controller controller(soil, pump, telemetry);
