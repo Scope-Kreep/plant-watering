@@ -18,8 +18,8 @@ constexpr long kStepsPerRev = kFullStepsPerRev * kMicrosteps;
 constexpr long kPulseSteps = kStepsPerRev;
 
 constexpr bool kForward = true;
-constexpr unsigned int kStepHighUs = 2;
-constexpr unsigned int kStepLowUs = 300;
+constexpr unsigned int kStepHighUs = 160;
+constexpr unsigned int kStepLowUs = 160;
 } // namespace
 
 Pump::Pump(HardwareSerial &uart)
