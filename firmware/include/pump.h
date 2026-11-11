@@ -23,7 +23,7 @@ public:
 
   bool begin();
 
-  Reading pulse();
+  void pulse(Reading &result);
 
   const char *error() const { return error_; }
 

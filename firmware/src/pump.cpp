@@ -51,15 +51,14 @@ bool Pump::begin() {
   return true;
 }
 
-Pump::Reading Pump::pulse() {
+void Pump::pulse(Reading &result) {
   error_ = nullptr;
-
-  Pump::Reading result{};
+  result = {};
 
   if (driver_.test_connection() != 0) {
     error_ = "driver_no_uart";
     result.success = false;
-    return result;
+    return;
   }
 
   if (driver_.reset()) {
@@ -76,8 +75,6 @@ Pump::Reading Pump::pulse() {
   result.success = !driverFaulted();
 
   digitalWrite(kEnPin, HIGH);
-
-  return result;
 }
 
 void Pump::configure() {
@@ -111,8 +108,7 @@ void Pump::run(long steps, Reading &result) {
     digitalWrite(kStepPin, LOW);
     delayMicroseconds(period - kStepHighUs);
 
-    if (((kLoadSampleEvery > 0 && (i + 1) % kLoadSampleEvery == 0) ||
-         i == steps - 1) &&
+    if ((i + 1) % kLoadSampleEvery == 0 &&
         result.sgSampleCount < kMaxLoadSamples) {
       result.sgSamples[result.sgSampleCount++] = driver_.SG_RESULT();
     }

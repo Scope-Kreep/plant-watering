@@ -36,12 +36,13 @@ void Controller::update() {
   case State::Measure:
     // temp
     {
-      const auto s = pump_.pulse();
-      if (!s.success) {
+      static Pump::Reading reading;
+      pump_.pulse(reading);
+      if (!reading.success) {
         enter(State::Fault, pump_.error());
         break;
       }
-      telemetry_.measurement(s);
+      telemetry_.measurement(reading);
       takeMeasurement();
       enter(State::Idle);
       break;
