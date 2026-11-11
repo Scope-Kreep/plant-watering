@@ -1,6 +1,7 @@
 #pragma once
 
 #include "moisture.h"
+#include "pump.h"
 #include <Arduino.h>
 
 class Telemetry {
@@ -9,7 +10,8 @@ public:
 
   void begin();
 
-  void measurement(const MoistureSensor::Reading &moisture) const;
+  void measurement(const MoistureSensor::Reading &soil) const;
+  void measurement(const Pump::Reading &stepper) const;
 
   void state(const char *name, const char *reason = nullptr) const;
 

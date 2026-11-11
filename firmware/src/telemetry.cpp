@@ -24,6 +24,20 @@ void Telemetry::measurement(const MoistureSensor::Reading &soil) const {
   out_.print(F("}\n"));
 }
 
+void Telemetry::measurement(const Pump::Reading &stepper) const {
+  out_.print(F("{\"type\":\"measurement\",\"stepper_actual_current_scale\":"));
+  out_.print(stepper.actualCurrentScale);
+  out_.print(F(",\"stepper_stall_guard_result\":"));
+  out_.print(stepper.stallGuardResult);
+  out_.print(F(",\"stepper_pwm_scale\":"));
+  out_.print(stepper.pwmScale);
+  out_.print(F(",\"stepper_microstep_counter\":"));
+  out_.print(stepper.microstepCounter);
+  out_.print(F(",\"stepper_step_time\":"));
+  out_.print(stepper.stepTime);
+  out_.print(F("}\n"));
+}
+
 void Telemetry::state(const char *name, const char *reason) const {
   out_.print(F("{\"type\":\"state\",\"state\":\""));
   out_.print(name);

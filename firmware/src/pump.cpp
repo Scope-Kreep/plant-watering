@@ -44,12 +44,15 @@ bool Pump::begin() {
   return true;
 }
 
-bool Pump::pulse() {
+Pump::Reading Pump::pulse() {
   error_ = nullptr;
+
+  Pump::Reading result{};
 
   if (driver_.test_connection() != 0) {
     error_ = "driver_no_uart";
-    return false;
+    result.success = false;
+    return result;
   }
 
   if (driver_.reset()) {
@@ -59,10 +62,16 @@ bool Pump::pulse() {
   digitalWrite(kEnPin, LOW);
   run(kPulseSteps);
 
-  const bool faulted = driverFaulted();
+  result.actualCurrentScale = driver_.cs_actual();
+  result.stallGuardResult = driver_.SG_RESULT();
+  result.pwmScale = driver_.pwm_scale_sum();
+  result.microstepCounter = driver_.MSCNT();
+  result.stepTime = driver_.TSTEP();
+  result.success = !driverFaulted();
+
   digitalWrite(kEnPin, HIGH);
 
-  return !faulted;
+  return result;
 }
 
 void Pump::configure() {

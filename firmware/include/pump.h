@@ -5,11 +5,20 @@
 
 class Pump {
 public:
+  struct Reading {
+    bool success;
+    uint16_t actualCurrentScale;
+    uint16_t stallGuardResult;
+    uint8_t pwmScale;
+    uint16_t microstepCounter;
+    uint32_t stepTime;
+  };
+
   Pump(HardwareSerial &uart);
 
   bool begin();
 
-  bool pulse();
+  Reading pulse();
 
   const char *error() const { return error_; }
 
