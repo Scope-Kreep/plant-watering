@@ -1,23 +1,25 @@
 #include "moisture.h"
 #include "pump.h"
+#include "telemetry.h"
 #include <Arduino.h>
 
 MoistureSensor moisture(A3);
 Pump pump(Serial1);
+Telemetry telemetry(Serial);
 
 void setup() {
-  Serial.begin(115200);
+  telemetry.begin();
+  telemetry.state("BOOT");
 
   if (!pump.begin()) {
-    // TODO: FAIL
+    telemetry.state("FAULT", pump.error());
+    // TODO: go to fault state when FSM exists
   }
+
+  telemetry.state("MEASURE");
 }
 
 void loop() {
-  const auto m = moisture.read();
-  Serial.print(m.raw);
-  Serial.print(",");
-  Serial.print(m.percent, 1);
-  Serial.print(",");
-  Serial.println(m.spread);
+  telemetry.measurement(moisture.read());
+  delay(1000);
 }
