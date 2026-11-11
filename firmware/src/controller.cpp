@@ -34,6 +34,7 @@ void Controller::update() {
     break;
 
   case State::Measure:
+    // temp
     pump_.pulse();
     takeMeasurement();
     enter(State::Idle);
