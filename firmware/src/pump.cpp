@@ -8,7 +8,7 @@ constexpr uint8_t kEnPin = 4;
 
 constexpr float kRSense = 0.11f;
 constexpr uint8_t kDriverAddr = 0b00;
-constexpr uint16_t kCurrentMa = 600;
+constexpr uint16_t kCurrentMa = 1000;
 constexpr uint8_t kMicrosteps = 16;
 constexpr unsigned long kUartBaud = 115200;
 
