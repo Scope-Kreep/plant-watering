@@ -1,10 +1,12 @@
+mod api;
+
 use topcoat::{
     Result,
     asset::{AssetBundle, RouterBuilderAssetExt},
     context::Cx,
-    font::{Font, RouterBuilderFontExt, fontsource::fontsource_font},
+    font::{Font, fontsource::fontsource_font},
     icon::{icon, iconify::iconify_icon},
-    router::{RouterBuilder, Slot, layout, module_router, page},
+    router::{RouterBuilder, RouterBuilderDiscoverExt, Slot, layout, module_router, page},
     runtime::RuntimeLayer,
     tailwind,
     view::{View, attributes, view},
@@ -16,7 +18,7 @@ const GEIST: Font = fontsource_font!(GEIST, weight: [400, 700], style: Normal);
 
 pub fn router() -> RouterBuilder {
     module_router!()
-        .font(GEIST)
+        .discover()
         .assets(AssetBundle::load().unwrap())
         .layer(RuntimeLayer::new())
 }
