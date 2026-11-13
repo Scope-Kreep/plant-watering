@@ -104,7 +104,11 @@ pub async fn card_content(
     #[default] mut attrs: Attributes,
     #[default] child: Child<'_>,
 ) -> Result<impl View> {
-    Ok(view! { <div class=(class!("px-6", attrs.remove("class"))) (attrs)>(child)</div> })
+    Ok(
+        view! {
+            <div class=(class!("px-6", attrs.remove("class"))) (attrs)>(child)</div>
+        },
+    )
 }
 
 /// The closing section of a [`card`], a horizontal row for actions.
