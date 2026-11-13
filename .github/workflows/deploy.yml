@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "pi/**"
+      - "web/**"
       - "firmware/**"
       - ".github/workflows/deploy.yml"
   workflow_dispatch:
@@ -12,16 +12,12 @@ on:
 permissions:
   contents: read
 
-env:
-  TARGET: aarch64-unknown-linux-gnu
-  BIN: plant-web
-
 jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
       firmware: ${{ github.event_name == 'workflow_dispatch' || steps.f.outputs.firmware == 'true' || steps.f.outputs.workflow == 'true' }}
-      pi: ${{ github.event_name == 'workflow_dispatch' || steps.f.outputs.pi == 'true' || steps.f.outputs.workflow == 'true' }}
+      web: ${{ github.event_name == 'workflow_dispatch' || steps.f.outputs.web == 'true' || steps.f.outputs.workflow == 'true' }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -29,7 +25,7 @@ jobs:
         with:
           filters: |
             firmware: 'firmware/**'
-            pi: 'pi/**'
+            web: 'web/**'
             workflow: '.github/workflows/deploy.yml'
 
   firmware:
@@ -52,45 +48,50 @@ jobs:
           python-version: "3.14"
       - run: pip install --upgrade platformio
       - run: pio run
-      - run: cp .pio/build/*/firmware.hex firmware.hex
       - uses: actions/upload-artifact@v7
         with:
           name: firmware
-          path: firmware/firmware.hex
+          path: firmware/.pio/build/*/firmware.hex
+          if-no-files-found: error
 
   web:
     needs: changes
-    if: needs.changes.outputs.pi == 'true'
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: pi
+        working-directory: web
+    env:
+      CARGO_BUILD_TARGET: aarch64-unknown-linux-gnu
+      CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ env.TARGET }}
+          targets: ${{ env.CARGO_BUILD_TARGET }}
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: pi
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: cross
-      - run: cross build --release --target $TARGET
-      - run: cp target/$TARGET/release/$BIN ./$BIN
+          workspaces: web
+      - run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+      - run: cargo install topcoat-cli --locked
+      - run: cargo build --release
+      - run: topcoat asset bundle --release
       - uses: actions/upload-artifact@v7
         with:
-          name: pi
-          path: pi/${{ env.BIN }}
+          name: web
+          path: |
+            web/target/${{ env.CARGO_BUILD_TARGET }}/release/web
+            web/target/${{ env.CARGO_BUILD_TARGET }}/release/assets
+          if-no-files-found: error
 
   deploy:
-    needs: [firmware, web]
+    needs: [changes, firmware, web]
     if: ${{ !cancelled() && !failure() }}
     runs-on: [self-hosted, plant-watering]
     concurrency: deploy
     env:
       SERVICE: plant-web
-      INSTALL_PATH: /opt/plant/plant-web
+      INSTALL_PATH: /opt/plant
       PORT: /dev/serial/by-id/usb-Arduino_LLC_Arduino_Leonardo-if00
       BAUD: 57600
     steps:
@@ -101,14 +102,23 @@ jobs:
       - name: Deploy
         run: |
           set -euo pipefail
-          [ -f "$INSTALL_PATH" ] && cp "$INSTALL_PATH" "$INSTALL_PATH.prev" || true
 
-          rollback() {
-            echo "deploy failed, restoring previous binary"
-            [ -f "$INSTALL_PATH.prev" ] && install -m 755 "$INSTALL_PATH.prev" "$INSTALL_PATH"
-            sudo systemctl start "$SERVICE"
+          PREV="${INSTALL_PATH}.prev"
+
+          restore() {
+            echo "deploy failed, restoring previous web build"
+            if [ -d "$PREV" ]; then
+              rm -rf "$INSTALL_PATH"
+              mv "$PREV" "$INSTALL_PATH"
+            fi
+            sudo systemctl restart "$SERVICE" || true
           }
-          trap rollback ERR
+          trap restore ERR
+
+          rm -rf "$PREV"
+          if [ -d "$INSTALL_PATH" ]; then
+            cp -a "$INSTALL_PATH" "$PREV"
+          fi
 
           sudo systemctl stop "$SERVICE"
 
@@ -119,11 +129,16 @@ jobs:
               -U flash:w:dist/firmware.hex:i
           fi
 
-          if [ -f "dist/$BIN" ]; then
-            install -m 755 "dist/$BIN" "$INSTALL_PATH"
+          if [ -f dist/web ]; then
+            mkdir -p "$INSTALL_PATH"
+            rm -rf "$INSTALL_PATH/assets"
+            install -m 755 dist/web "$INSTALL_PATH/web"
+            cp -a dist/assets "$INSTALL_PATH/assets"
           fi
 
           sudo systemctl start "$SERVICE"
-
           sleep 3
           systemctl is-active --quiet "$SERVICE"
+
+          trap - ERR
+          rm -rf "$PREV"
