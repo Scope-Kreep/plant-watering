@@ -103,21 +103,30 @@ jobs:
         run: |
           set -euo pipefail
 
-          PREV="${INSTALL_PATH}.prev"
+          PREV="${INSTALL_PATH}/.prev"
 
           restore() {
             echo "deploy failed, restoring previous web build"
             if [ -d "$PREV" ]; then
-              rm -rf "$INSTALL_PATH"
-              mv "$PREV" "$INSTALL_PATH"
+              rm -rf "$INSTALL_PATH/web" "$INSTALL_PATH/assets"
+              cp -a "$PREV/." "$INSTALL_PATH/"
+              rm -rf "$PREV"
             fi
             sudo systemctl restart "$SERVICE" || true
           }
           trap restore ERR
 
           rm -rf "$PREV"
-          if [ -d "$INSTALL_PATH" ]; then
-            cp -a "$INSTALL_PATH" "$PREV"
+          mkdir -p "$INSTALL_PATH"
+
+          if [ -d "$INSTALL_PATH/web" ]; then
+            mkdir -p "$PREV"
+            cp -a "$INSTALL_PATH/web" "$PREV/"
+          fi
+
+          if [ -d "$INSTALL_PATH/assets" ]; then
+            mkdir -p "$PREV"
+            cp -a "$INSTALL_PATH/assets" "$PREV/"
           fi
 
           sudo systemctl stop "$SERVICE"
@@ -130,9 +139,8 @@ jobs:
           fi
 
           if [ -f dist/web ]; then
-            mkdir -p "$INSTALL_PATH"
-            rm -rf "$INSTALL_PATH/assets"
             install -m 755 dist/web "$INSTALL_PATH/web"
+            rm -rf "$INSTALL_PATH/assets"
             cp -a dist/assets "$INSTALL_PATH/assets"
           fi
 
