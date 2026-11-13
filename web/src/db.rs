@@ -10,6 +10,7 @@ pub async fn connect() -> toasty::Result<Db> {
         .await
 }
 
+#[allow(dead_code)]
 pub fn db(cx: &Cx) -> Db {
     context::<Db>(cx).clone()
 }
