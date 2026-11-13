@@ -9,9 +9,7 @@ async fn main() {
 
     let mut args = std::env::args().skip(1).peekable();
     if args.peek().is_some_and(|arg| arg == "toasty") {
-        if let Err(error) =
-            toasty_cli::ToastyCli::new(db).parse_from(args).await
-        {
+        if let Err(error) = toasty_cli::ToastyCli::new(db).parse_from(args).await {
             eprintln!("{error:#}");
             std::process::exit(1);
         }

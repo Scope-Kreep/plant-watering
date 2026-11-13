@@ -10,9 +10,7 @@ use topcoat::{
     view::{View, attributes, view},
 };
 
-use crate::components::card::{
-    card, card_description, card_header, card_title,
-};
+use crate::components::card::{card, card_description, card_header, card_title};
 
 const GEIST: Font = fontsource_font!(GEIST, weight: [400, 700], style: Normal);
 
