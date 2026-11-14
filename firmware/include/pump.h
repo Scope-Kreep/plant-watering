@@ -31,6 +31,7 @@ private:
   void configure();
   void run(long steps, Reading &result);
   bool driverFaulted();
+  bool testConnection();
 
   HardwareSerial &uart_;
   TMC2209Stepper driver_;
