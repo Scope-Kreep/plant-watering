@@ -1,13 +1,13 @@
 use jiff::Timestamp;
 
 #[derive(Debug, toasty::Model)]
-struct State {
+pub struct State {
     #[key]
     #[auto]
-    id: u64,
+    pub id: u64,
 
-    name: String,
-    reason: Option<String>,
+    pub name: String,
+    pub reason: Option<String>,
     #[default(jiff::Timestamp::now())]
-    timestamp: Timestamp,
+    pub timestamp: Timestamp,
 }

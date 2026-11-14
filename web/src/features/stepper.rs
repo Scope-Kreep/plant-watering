@@ -1,16 +1,16 @@
 use jiff::Timestamp;
 
 #[derive(Debug, toasty::Model)]
-struct StepperMeasurement {
+pub struct StepperMeasurement {
     #[key]
     #[auto]
-    id: u64,
+    pub id: u64,
 
-    current_scale: u16,
-    pwm_scale: u8,
-    microstep_counter: u16,
-    step_time: u32,
-    sg_samples: Vec<u16>,
+    pub current_scale: u16,
+    pub pwm_scale: u8,
+    pub microstep_counter: u16,
+    pub step_time: u32,
+    pub sg_samples: Vec<u16>,
     #[default(jiff::Timestamp::now())]
-    timestamp: Timestamp,
+    pub timestamp: Timestamp,
 }

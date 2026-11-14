@@ -1,14 +1,14 @@
 use jiff::Timestamp;
 
 #[derive(Debug, toasty::Model)]
-struct Moisture {
+pub struct Moisture {
     #[key]
     #[auto]
-    id: u64,
+    pub id: u64,
 
-    raw: u16,
-    spread: u16,
-    percent: f32,
+    pub raw: u16,
+    pub spread: u16,
+    pub percent: f32,
     #[default(jiff::Timestamp::now())]
-    timestamp: Timestamp,
+    pub timestamp: Timestamp,
 }

@@ -2,12 +2,12 @@ mod app;
 mod components;
 mod db;
 mod features;
+mod serial;
 
 #[tokio::main]
-async fn main() {
-    let db = db::connect().await.unwrap();
-
-    db::migrate(&db).await.unwrap();
+async fn main() -> eyre::Result<()> {
+    let db = db::connect().await?;
+    db::migrate(&db).await?;
 
     let mut args = std::env::args().skip(1).peekable();
     if args.peek().is_some_and(|arg| arg == "toasty") {
@@ -15,10 +15,16 @@ async fn main() {
             eprintln!("{error:#}");
             std::process::exit(1);
         }
-        return;
+        return Ok(());
     }
 
-    topcoat::start(app::router().with(db).build())
-        .await
-        .unwrap();
+    if let Ok(port) = std::env::var("SERIAL_PORT") {
+        tokio::spawn(serial::run(port, 115_200, db.clone()));
+    } else {
+        eprintln!("SERIAL_PORT not set, serial reader disabled");
+    }
+
+    topcoat::start(app::router().with(db).build()).await?;
+
+    Ok(())
 }
