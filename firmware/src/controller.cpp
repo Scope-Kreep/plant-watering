@@ -1,5 +1,4 @@
 #include "controller.h"
-#include <cstring>
 
 namespace {
 // constexpr uint32_t kMeasureIntervalMs = 15UL * 60UL * 1000UL;
