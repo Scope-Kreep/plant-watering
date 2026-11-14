@@ -15,29 +15,29 @@ void Telemetry::begin() {
 }
 
 void Telemetry::measurement(const MoistureSensor::Reading &soil) const {
-  out_.print(F("{\"type\":\"measurement\",\"soil_raw\":"));
+  out_.print(F("{\"type\":\"moisture\",\"raw\":"));
   out_.print(soil.raw);
-  out_.print(F(",\"soil_spread\":"));
+  out_.print(F(",\"spread\":"));
   out_.print(soil.spread);
-  out_.print(F(",\"soil_percent\":"));
+  out_.print(F(",\"percent\":"));
   out_.print(soil.percent, 1);
   out_.print(F("}\n"));
 }
 
 void Telemetry::measurement(const Pump::Reading &stepper) const {
-  out_.print(F("{\"type\":\"measurement\",\"stepper_pwm\":"));
+  out_.print(F("{\"type\":\"stepper\",\"pwm_scale\":"));
   out_.print(stepper.pwmScale);
 
-  out_.print(F(",\"stepper_mscnt\":"));
+  out_.print(F(",\"microstep_counter\":"));
   out_.print(stepper.microstepCounter);
 
-  out_.print(F(",\"stepper_tstep\":"));
+  out_.print(F(",\"step_time\":"));
   out_.print(stepper.stepTime);
 
-  out_.print(F(",\"stepper_cs\":"));
+  out_.print(F(",\"current_scale\":"));
   out_.print(stepper.currentScale);
 
-  out_.print(F(",\"stepper_sg\":["));
+  out_.print(F(",\"sg_samples\":["));
 
   for (uint8_t i = 0; i < stepper.sgSampleCount; ++i) {
     if (i > 0)
@@ -52,7 +52,7 @@ void Telemetry::measurement(const Pump::Reading &stepper) const {
 }
 
 void Telemetry::state(const char *name, const char *reason) const {
-  out_.print(F("{\"type\":\"state\",\"state\":\""));
+  out_.print(F("{\"type\":\"state\",\"name\":\""));
   out_.print(name);
   out_.print('"');
   if (reason != nullptr) {
