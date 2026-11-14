@@ -11,5 +11,6 @@ struct StepperMeasurement {
     microstep_counter: u16,
     step_time: u32,
     sg_samples: Vec<u16>,
+    #[default(jiff::Timestamp::now())]
     timestamp: Timestamp,
 }

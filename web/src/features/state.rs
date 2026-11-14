@@ -8,5 +8,6 @@ struct State {
 
     name: String,
     reason: Option<String>,
+    #[default(jiff::Timestamp::now())]
     timestamp: Timestamp,
 }

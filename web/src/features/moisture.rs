@@ -9,5 +9,6 @@ struct Moisture {
     raw: u16,
     spread: u16,
     percent: f32,
+    #[default(jiff::Timestamp::now())]
     timestamp: Timestamp,
 }
