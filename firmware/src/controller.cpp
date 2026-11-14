@@ -2,7 +2,7 @@
 
 namespace {
 // constexpr uint32_t kMeasureIntervalMs = 15UL * 60UL * 1000UL;
-constexpr uint32_t kMeasureIntervalMs = 5UL * 1000UL;
+constexpr uint32_t kMeasureIntervalMs = 5UL * 60UL * 1000UL;
 } // namespace
 
 Controller::Controller(MoistureSensor &soil, Pump &pump, Telemetry &telemetry)
