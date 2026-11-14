@@ -51,10 +51,11 @@ void Controller::update() {
   case State::Fault:
     if (measurementDue()) {
       takeMeasurement();
-    }
-    if (pump_.error() != nullptr) {
-      if (pump_.begin()) {
-        enter(State::Idle);
+
+      if (pump_.error() != nullptr) {
+        if (pump_.begin()) {
+          enter(State::Idle);
+        }
       }
     }
     break;
