@@ -1,4 +1,5 @@
 mod api;
+pub mod dashboard;
 
 use topcoat::{
     Result,

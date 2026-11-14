@@ -5,7 +5,9 @@ use serde::Deserialize;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio_serial::SerialPortBuilderExt;
 
-use crate::features::{moisture::Moisture, state::State, stepper::StepperMeasurement};
+use crate::features::{
+    Kind, PlantEvents, moisture::Moisture, state::State, stepper::StepperMeasurement,
+};
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type")]
@@ -29,7 +31,11 @@ enum SensorMessage {
     },
 }
 
-async fn store(db: &mut toasty::Db, msg: SensorMessage) -> toasty::Result<()> {
+async fn store(
+    db: &mut toasty::Db,
+    msg: SensorMessage,
+    events: &PlantEvents,
+) -> toasty::Result<()> {
     match msg {
         SensorMessage::Moisture {
             raw,
@@ -43,9 +49,11 @@ async fn store(db: &mut toasty::Db, msg: SensorMessage) -> toasty::Result<()> {
             })
             .exec(db)
             .await?;
+            events.notify(Kind::Moisture);
         }
         SensorMessage::State { name, reason } => {
             toasty::create!(State { name, reason }).exec(db).await?;
+            events.notify(Kind::State);
         }
         SensorMessage::StepperMeasurement {
             current_scale,
@@ -63,13 +71,14 @@ async fn store(db: &mut toasty::Db, msg: SensorMessage) -> toasty::Result<()> {
             })
             .exec(db)
             .await?;
+            events.notify(Kind::Stepper);
         }
     }
 
     Ok(())
 }
 
-async fn read_port(path: &str, baud: u32, db: &mut toasty::Db) -> Result<()> {
+async fn read_port(path: &str, baud: u32, db: &mut toasty::Db, events: &PlantEvents) -> Result<()> {
     let port = tokio_serial::new(path, baud)
         .open_native_async()
         .wrap_err_with(|| format!("failed to open serial port {path}"))?;
@@ -82,7 +91,7 @@ async fn read_port(path: &str, baud: u32, db: &mut toasty::Db) -> Result<()> {
         }
         match serde_json::from_str::<SensorMessage>(line) {
             Ok(msg) => {
-                if let Err(e) = store(db, msg).await {
+                if let Err(e) = store(db, msg, events).await {
                     eprintln!("db write failed: {e}");
                 }
             }
@@ -93,9 +102,9 @@ async fn read_port(path: &str, baud: u32, db: &mut toasty::Db) -> Result<()> {
     Ok(())
 }
 
-pub async fn run(port: String, baud: u32, mut db: toasty::Db) {
+pub async fn run(port: String, baud: u32, mut db: toasty::Db, events: PlantEvents) {
     loop {
-        if let Err(e) = read_port(&port, baud, &mut db).await {
+        if let Err(e) = read_port(&port, baud, &mut db, &events).await {
             eprintln!("serial error: {e}");
         }
         tokio::time::sleep(Duration::from_secs(2)).await

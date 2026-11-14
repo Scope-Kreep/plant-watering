@@ -8,6 +8,14 @@ registry = "topcoat"
 hash = "sha256:5e370e648fef95d78c8b048d99be7f7d79fd82132f8c9cc1ce854d3b73024137"
 file = "styles.css"
 
+[registries.topcoat.components.badge]
+hash = "sha256:4d9c160f211e8a29a0fcad069f104229a5b4629bf9774fd2f490b747175f90d8"
+file = "src/components/badge.rs"
+
 [registries.topcoat.components.card]
 hash = "sha256:e08d76f7aef2db99246f144b904419db5aacd5712af8112b611f11454203b621"
 file = "src/components/card.rs"
+
+[registries.topcoat.components.table]
+hash = "sha256:d68f9e91742366229dde0fb512b0eea9aa71b05b713dc4dbd9ef2ad7b78dea1f"
+file = "src/components/table.rs"

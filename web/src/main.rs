@@ -1,3 +1,5 @@
+use crate::features::PlantEvents;
+
 mod app;
 mod components;
 mod db;
@@ -18,13 +20,15 @@ async fn main() -> eyre::Result<()> {
         return Ok(());
     }
 
+    let events = PlantEvents::default();
+
     if let Ok(port) = std::env::var("SERIAL_PORT") {
-        tokio::spawn(serial::run(port, 115_200, db.clone()));
+        tokio::spawn(serial::run(port, 115_200, db.clone(), events.clone()));
     } else {
         eprintln!("SERIAL_PORT not set, serial reader disabled");
     }
 
-    topcoat::start(app::router().with(db).build()).await?;
+    topcoat::start(app::router().with(db).with(events).build()).await?;
 
     Ok(())
 }
