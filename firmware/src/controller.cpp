@@ -1,4 +1,5 @@
 #include "controller.h"
+#include <cstring>
 
 namespace {
 // constexpr uint32_t kMeasureIntervalMs = 15UL * 60UL * 1000UL;
@@ -53,8 +54,12 @@ void Controller::update() {
       takeMeasurement();
 
       if (pump_.error() != nullptr) {
+        const char *prevError = pump_.error();
         if (pump_.begin()) {
           enter(State::Idle);
+        }
+        if (strcmp(prevError, pump_.error()) != 0) {
+          enter(State::Fault, pump_.error());
         }
       }
     }
