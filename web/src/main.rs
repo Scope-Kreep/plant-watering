@@ -7,6 +7,8 @@ mod features;
 async fn main() {
     let db = db::connect().await.unwrap();
 
+    db::migrate(&db).await.unwrap();
+
     let mut args = std::env::args().skip(1).peekable();
     if args.peek().is_some_and(|arg| arg == "toasty") {
         if let Err(error) = toasty_cli::ToastyCli::new(db).parse_from(args).await {
