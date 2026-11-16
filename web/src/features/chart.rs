@@ -5,7 +5,7 @@ use topcoat::context::Cx;
 use topcoat::view::{View, component, view};
 
 use crate::components::card::{card, card_content, card_description, card_header, card_title};
-use crate::features::human;
+use crate::features::{age_secs, human};
 
 use super::Window;
 
@@ -228,14 +228,14 @@ pub async fn stat_tile(
     title: &str,
     value: &str,
     detail: &str,
-    updated: &str,
+    updated_at: Option<Timestamp>,
     warning: &str,
 ) -> Result<impl View> {
     Ok(view! {
         card(
             card_header(
                 card_title((title))
-                card_description((updated))
+                card_description(updated_ago(at: updated_at))
             )
             card_content(
                 <div class="text-4xl font-semibold tabular-nums">(value)</div>
@@ -245,5 +245,19 @@ pub async fn stat_tile(
                 }
             )
         )
+    })
+}
+
+#[component]
+pub async fn updated_ago(cx: &Cx, at: Option<Timestamp>) -> Result<impl View> {
+    let now = Timestamp::now();
+    let text = match at {
+        Some(s) => format!("updated {} ago", human(age_secs(s, now))),
+        None => "never updated".to_string(),
+    };
+    Ok(view! {
+        <span data-updated-at=(at.map(|s| s.to_string()).unwrap_or_default())>
+            (text)
+        </span>
     })
 }

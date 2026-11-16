@@ -40,13 +40,13 @@ pub async fn moisture_tile(cx: &Cx) -> Result<impl View> {
                 .await?;
             let now = Timestamp::now();
 
-            let (value, detail, updated, warning) = match latest {
+            let (value, detail, updated_at, warning) = match latest {
                 Some(m) => {
                     let age = age_secs(m.timestamp, now);
                     (
                         format!("{:.0}%", m.percent),
                         format!("raw {} · spread {}", m.raw, m.spread),
-                        format!("updated {} ago", human(age)),
+                        Some(m.timestamp),
                         if age > STALE_SECS {
                             format!("No new reading for {}", human(age))
                         } else {
@@ -57,7 +57,7 @@ pub async fn moisture_tile(cx: &Cx) -> Result<impl View> {
                 None => (
                     "—".to_string(),
                     "No readings yet".to_string(),
-                    "never updated".to_string(),
+                    None,
                     String::new(),
                 ),
             };
@@ -67,7 +67,7 @@ pub async fn moisture_tile(cx: &Cx) -> Result<impl View> {
                     title: "Soil moisture",
                     value: &value,
                     detail: &detail,
-                    updated: &updated,
+                    updated_at: updated_at,
                     warning: &warning
                 )
             }?;
@@ -87,7 +87,6 @@ pub async fn moisture_charts(cx: &Cx, range: String) -> Result<impl View> {
         let mut rx = subscribe(cx);
         loop {
             let w = range.window();
-            // GAP: `.ge(Timestamp)` on a jiff field is assumed, I only saw `.eq` and `.like`.
             let rows = Moisture::filter(Moisture::fields().timestamp().ge(w.start))
                 .order_by(Moisture::fields().id().asc())
                 .exec(&mut db(cx))
@@ -121,7 +120,6 @@ pub async fn moisture_charts(cx: &Cx, range: String) -> Result<impl View> {
             if !connected(cx) {
                 break Ok(token);
             }
-            // Wake on new data, or every 30 s so the window keeps sliding.
             wait_for(&mut rx, Kind::Moisture).await;
         }
     })

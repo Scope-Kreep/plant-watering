@@ -1,4 +1,5 @@
 use topcoat::Result;
+use topcoat::asset::asset;
 use topcoat::context::Cx;
 use topcoat::router::page;
 use topcoat::runtime::{Event, signal};
@@ -41,6 +42,8 @@ pub async fn page(cx: &Cx) -> Result<impl View> {
             state_section(range: $(range.get()))
             moisture_charts(range: $(range.get()))
             stepper_charts(range: $(range.get()))
+
+            <script src=(asset!("./dashboard.js"))></script>
         </div>
     })
 }

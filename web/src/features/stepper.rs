@@ -47,7 +47,7 @@ pub async fn stepper_tile(cx: &Cx) -> Result<impl View> {
                 .await?;
             let now = Timestamp::now();
 
-            let (value, detail, updated, warning) = match latest {
+            let (value, detail, updated_at, warning) = match latest {
                 Some(m) => {
                     let age = age_secs(m.timestamp, now);
                     (
@@ -57,9 +57,7 @@ pub async fn stepper_tile(cx: &Cx) -> Result<impl View> {
                             m.microstep_counter,
                             m.step_time,
                         ),
-                        format!("updated {} ago", human(age)),
-                        // GAP: the stepper probably reports only while moving, so
-                        // this warning may fire during normal idle time.
+                        Some(m.timestamp),
                         if age > STALE_SECS {
                             format!("No new measurement for {}", human(age))
                         } else {
@@ -70,7 +68,7 @@ pub async fn stepper_tile(cx: &Cx) -> Result<impl View> {
                 None => (
                     "—".to_string(),
                     "No measurements yet".to_string(),
-                    "never updated".to_string(),
+                    None,
                     String::new(),
                 ),
             };
@@ -80,7 +78,7 @@ pub async fn stepper_tile(cx: &Cx) -> Result<impl View> {
                     title: "Stepper",
                     value: &value,
                     detail: &detail,
-                    updated: &updated,
+                    updated_at: updated_at,
                     warning: &warning
                 )
             }?;

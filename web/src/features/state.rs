@@ -9,7 +9,8 @@ use crate::components::table::{
     table, table_body, table_cell, table_head, table_header, table_row,
 };
 use crate::db::db;
-use crate::features::{Kind, Range, age_secs, human, subscribe, wait_for};
+use crate::features::chart::updated_ago;
+use crate::features::{Kind, Range, human, subscribe, wait_for};
 
 use super::{Window, clock};
 
@@ -164,32 +165,22 @@ pub async fn state_tile(cx: &Cx) -> Result<impl View> {
                 .first()
                 .exec(&mut db(cx))
                 .await?;
-            let now = Timestamp::now();
 
-            let (name, bg, since, reason) = match latest {
+            let (name, bg, updated_at, reason) = match latest {
                 Some(s) => (
                     s.name.clone(),
                     StateKind::from_name(&s.name).bg(),
-                    format!(
-                        "since {} ({} ago)",
-                        clock(s.timestamp),
-                        human(age_secs(s.timestamp, now)),
-                    ),
+                    Some(s.timestamp),
                     s.reason.clone().unwrap_or_default(),
                 ),
-                None => (
-                    "—".to_string(),
-                    StateKind::Other.bg(),
-                    "No state received yet".to_string(),
-                    String::new(),
-                ),
+                None => ("—".to_string(), StateKind::Other.bg(), None, String::new()),
             };
 
             let token = emit! {
                 card(
                     card_header(
                         card_title("State")
-                        card_description((since))
+                        card_description(updated_ago(at: updated_at))
                     )
                     card_content(
                         <span
