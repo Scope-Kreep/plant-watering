@@ -256,7 +256,9 @@ pub async fn updated_ago(cx: &Cx, at: Option<Timestamp>) -> Result<impl View> {
         None => "never updated".to_string(),
     };
     Ok(view! {
-        <span data-updated-at=(at.map(|s| s.to_string()).unwrap_or_default())>
+        <span
+            data-updated-at=(at.map(|s| s.as_second().to_string()).unwrap_or_default())
+        >
             (text)
         </span>
     })

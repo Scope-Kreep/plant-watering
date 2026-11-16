@@ -13,4 +13,4 @@ setInterval(() => {
     const s = Number(el.dataset.updatedAt);
     if (s) el.textContent = "updated " + human(now - s) + " ago";
   });
-});
+}, 1000);
