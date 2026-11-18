@@ -38,7 +38,7 @@ void Controller::update() {
     {
       static Pump::Reading reading;
       pump_.pulse(reading);
-      if (!reading.success) {
+      if (pump_.error() != nullptr) {
         enter(State::Fault, pump_.error());
         break;
       }
