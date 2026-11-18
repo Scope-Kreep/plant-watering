@@ -95,7 +95,12 @@ impl Block {
     }
 
     fn title(&self) -> String {
-        format!("{} · {} to {}", self.name, clock(self.from), clock(self.to))
+        let title = format!("{} · {} to {}", self.name, clock(self.from), clock(self.to));
+
+        match &self.reason {
+            Some(reason) => format!("{title} · {reason}"),
+            _ => title,
+        }
     }
 }
 
