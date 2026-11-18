@@ -36,6 +36,7 @@ void Controller::update() {
   case State::Measure:
     // temp
     {
+      takeMeasurement();
       static Pump::Reading reading;
       pump_.pulse(reading);
       if (pump_.error() != nullptr) {
@@ -43,7 +44,6 @@ void Controller::update() {
         break;
       }
       telemetry_.measurement(reading);
-      takeMeasurement();
       enter(State::Idle);
       break;
     }
@@ -56,8 +56,7 @@ void Controller::update() {
         const char *prevError = pump_.error();
         if (pump_.begin()) {
           enter(State::Idle);
-        }
-        if (strcmp(prevError, pump_.error()) != 0) {
+        } else if (strcmp(prevError, pump_.error()) != 0) {
           enter(State::Fault, pump_.error());
         }
       }
@@ -67,10 +66,6 @@ void Controller::update() {
 }
 
 void Controller::enter(State next, const char *reason) {
-  if (next == state_) {
-    return;
-  }
-
   state_ = next;
   telemetry_.state(name(next), reason);
 }
