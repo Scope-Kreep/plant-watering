@@ -82,7 +82,7 @@ void Pump::configure() {
   driver_.blank_time(24);
   driver_.rms_current(kCurrentMa);
   driver_.microsteps(kMicrosteps);
-  driver_.en_spreadCycle(true);    // SpreadCycle: mer moment under last
+  driver_.en_spreadCycle(false);    // SpreadCycle: mer moment under last
   driver_.pwm_autoscale(true);
   driver_.GSTAT(0b111);
 }
