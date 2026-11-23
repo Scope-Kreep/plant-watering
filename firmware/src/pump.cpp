@@ -15,7 +15,7 @@ constexpr unsigned long kUartBaud = 115200;
 constexpr long kFullStepsPerRev = 200;
 constexpr long kStepsPerRev = kFullStepsPerRev * kMicrosteps;
 
-constexpr long kPulseSteps = kStepsPerRev * 5;
+constexpr long kPulseSteps = kStepsPerRev * 15;
 
 constexpr bool kForward = true;
 constexpr unsigned int kStepHighUs = 5;
