@@ -17,6 +17,7 @@ public:
     uint32_t stepTime;
     uint16_t sgSamples[kMaxLoadSamples] = {};
     uint16_t sgSampleCount = 0;
+    bool stalled = false;
   };
 
   Pump(HardwareSerial &uart);
