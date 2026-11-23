@@ -19,9 +19,9 @@ constexpr long kPulseSteps = kStepsPerRev * 5;
 
 constexpr bool kForward = true;
 constexpr unsigned int kStepHighUs = 5;
-constexpr unsigned int kStepLowUs = 160;
+constexpr unsigned int kStepLowUs = 600;
 
-constexpr unsigned int kRampSteps = 400;
+constexpr unsigned int kRampSteps = 1300;
 
 constexpr long kLoadSampleEvery = kPulseSteps / kMaxLoadSamples;
 
@@ -59,8 +59,9 @@ void Pump::pulse(Reading &result) {
     configure();
   }
 
-  digitalWrite(kEnPin, LOW);
-  run(kPulseSteps, result);
+    digitalWrite(kEnPin, LOW);
+    delay(150);
+    run(kPulseSteps, result);
 
   result.currentScale = driver_.cs_actual();
   result.pwmScale = driver_.pwm_scale_sum();
@@ -73,11 +74,14 @@ void Pump::pulse(Reading &result) {
 
 void Pump::configure() {
   driver_.begin();
-  driver_.toff(5);
+  driver_.I_scale_analog(false);   // bruk rms_current(), ikke potmeteret
+  driver_.internal_Rsense(false);
+  driver_.toff(4);
+  driver_.blank_time(24);
   driver_.rms_current(kCurrentMa);
   driver_.microsteps(kMicrosteps);
+  driver_.en_spreadCycle(true);    // SpreadCycle: mer moment under last
   driver_.pwm_autoscale(true);
-  driver_.en_spreadCycle(false);
   driver_.GSTAT(0b111);
 }
 
@@ -101,11 +105,14 @@ void Pump::run(long steps, Reading &result) {
 
     digitalWrite(kStepPin, LOW);
     delayMicroseconds(period - kStepHighUs);
-
+      
+    /*
     if ((i + 1) % kLoadSampleEvery == 0 &&
         result.sgSampleCount < kMaxLoadSamples) {
       result.sgSamples[result.sgSampleCount++] = driver_.SG_RESULT();
     }
+    kommentert ut siden vi ikke bruker stealthchop lenger og kan ikke lese Stall guard
+    */
   }
 }
 
