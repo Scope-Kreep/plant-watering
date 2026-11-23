@@ -1,10 +1,12 @@
 #include "pump.h"
 #include "Arduino.h"
+#include <util/atomic.h>
 
 namespace {
 constexpr uint8_t kStepPin = 2;
 constexpr uint8_t kDirPin = 3;
 constexpr uint8_t kEnPin = 4;
+constexpr uint8_t kDiagPin = 7; // INT6 på ATmega32U4
 
 constexpr float kRSense = 0.11f;
 constexpr uint8_t kDriverAddr = 0b00;
@@ -15,7 +17,7 @@ constexpr unsigned long kUartBaud = 115200;
 constexpr long kFullStepsPerRev = 200;
 constexpr long kStepsPerRev = kFullStepsPerRev * kMicrosteps;
 
-constexpr long kPulseSteps = kStepsPerRev * 15;
+constexpr long kPulseSteps = kStepsPerRev * 5;
 
 constexpr bool kForward = true;
 constexpr unsigned int kStepHighUs = 5;
