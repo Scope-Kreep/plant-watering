@@ -138,7 +138,8 @@ pub async fn line_chart(
     title: &str,
     description: &str,
     series: &Series,
-    window: &Window,
+    x_start: &str,
+    x_end: &str,
 ) -> Result<impl View> {
     Ok(view! {
         card(
@@ -211,8 +212,8 @@ pub async fn line_chart(
                     </div>
                 }
                 <div class="mt-1 flex justify-between text-xs text-muted-foreground">
-                    <span>(window.start_label())</span>
-                    <span>(window.end_label())</span>
+                    <span>(x_start)</span>
+                    <span>(x_end)</span>
                 </div>
                 <p class="mt-3 text-sm text-muted-foreground">(&series.stats)</p>
             )
