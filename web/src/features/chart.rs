@@ -46,10 +46,8 @@ pub fn series(
         "{} readings · min {min:.dec$}{unit} · avg {avg:.dec$}{unit} · max {max:.dec$}{unit}",
         points.len()
     );
-    if trend {
-        if let Some(s) = slope_per_hour(points) {
-            let _ = write!(stats, " · trend {s:+.1}{unit}/h");
-        }
+    if trend && let Some(s) = slope_per_hour(points) {
+        let _ = write!(stats, " · trend {s:+.1}{unit}/h");
     }
 
     if let Some(gap) = longest_gap_secs(points) {
