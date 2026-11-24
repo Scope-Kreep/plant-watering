@@ -113,36 +113,16 @@ pub async fn stepper_charts(cx: &Cx, range: String) -> Result<impl View> {
             let sg_mean = series(&sg_points, &w, None, "", 0, false);
             let step_time = series(&step_points, &w, None, "", 0, false);
 
-            let latest_sg: Series = match rows
-                .last()
-                .filter(|r| !r.sg_samples.is_empty()) {
-                Some(r) => {
-                    let vals: Vec<f32> = r
-                        .sg_samples
-                        .iter()
-                        .map(|&v| f32::from(v))
-                        .collect();
-                    let min = vals.iter().copied().fold(f32::INFINITY, f32::min);
-                    let max = vals.iter().copied().fold(f32::NEG_INFINITY, f32::max);
-                    let (lo, hi) = widen(min, max);
-                    let buckets: Vec<Option<f32>> = vals
-                        .iter()
-                        .map(|v| Some(*v))
-                        .collect();
-                    Series {
-                        path: path(&buckets, lo, hi),
-                        top: format!("{hi:.0}"),
-                        bottom: format!("{lo:.0}"),
-                        stats: format!("{} samples", vals.len()),
-                    }
-                }
-                None => Series {
-                    path: String::new(),
-                    top: String::new(),
-                    bottom: String::new(),
-                    stats: "No samples in this range".to_string(),
-                },
-            };
+            // The newest pulse is shown regardless of the selected range:
+            // the samples cover the few seconds the motor was running,
+            // not the dashboard time window.
+            let latest = StepperMeasurement::all()
+                .order_by(StepperMeasurement::fields().id().desc())
+                .first()
+                .exec(&mut db(cx))
+                .await?;
+            let (latest_sg, latest_end) = latest_pulse(latest.as_ref(), Timestamp::now());
+            let (x_start, x_end) = (w.start_label(), w.end_label());
 
             let token = emit! {
                 <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -150,19 +130,22 @@ pub async fn stepper_charts(cx: &Cx, range: String) -> Result<impl View> {
                         title: "sg_samples, mean per measurement",
                         description: "Averaged per time bucket",
                         series: &sg_mean,
-                        window: &w
+                        x_start: x_start.as_str(),
+                        x_end: x_end.as_str()
                     )
                     line_chart(
                         title: "step_time",
                         description: "Averaged per time bucket",
                         series: &step_time,
-                        window: &w
+                        x_start: x_start.as_str(),
+                        x_end: x_end.as_str()
                     )
                     line_chart(
                         title: "Latest sg_samples",
-                        description: "Newest measurement in range, by sample index",
+                        description: "Newest pump pulse, by sample index",
                         series: &latest_sg,
-                        window: &w
+                        x_start: "sample 1",
+                        x_end: latest_end.as_str()
                     )
                 </div>
             }?;
@@ -173,4 +156,39 @@ pub async fn stepper_charts(cx: &Cx, range: String) -> Result<impl View> {
             wait_for(&mut rx, Kind::Stepper).await;
         }
     })
+}
+
+/// Builds the chart for one pump pulse, with sample index on the x-axis.
+/// Returns the series and the label for the last sample.
+fn latest_pulse(m: Option<&StepperMeasurement>, now: Timestamp) -> (Series, String) {
+    let Some(m) = m.filter(|m| !m.sg_samples.is_empty()) else {
+        return (
+            Series {
+                path: String::new(),
+                top: String::new(),
+                bottom: String::new(),
+                stats: "No pump pulse with samples yet".to_string(),
+            },
+            String::new(),
+        );
+    };
+
+    let vals: Vec<f32> = m.sg_samples.iter().map(|&v| f32::from(v)).collect();
+    let min = vals.iter().copied().fold(f32::INFINITY, f32::min);
+    let max = vals.iter().copied().fold(f32::NEG_INFINITY, f32::max);
+    let avg = vals.iter().sum::<f32>() / vals.len() as f32;
+    let (lo, hi) = widen(min, max);
+    let buckets: Vec<Option<f32>> = vals.iter().map(|v| Some(*v)).collect();
+
+    let series = Series {
+        path: path(&buckets, lo, hi),
+        top: format!("{hi:.0}"),
+        bottom: format!("{lo:.0}"),
+        stats: format!(
+            "{} samples · min {min:.0} · avg {avg:.0} · max {max:.0} · pulse {} ago",
+            vals.len(),
+            human(age_secs(m.timestamp, now)),
+        ),
+    };
+    (series, format!("sample {}", vals.len()))
 }
