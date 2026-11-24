@@ -118,6 +118,31 @@ void Pump::configure() {
   driver_.GSTAT(0b111);
 }
 
+bool Pump::driverFaulted() {
+  if (driver_.drv_err() || driver_.ot() || driver_.s2ga() || driver_.s2gb() ||
+      driver_.s2vsa() || driver_.s2vsb()) {
+    error_ = "stepper_driver_error";
+    return true;
+  }
+  return false;
+}
+
+bool Pump::testConnection() {
+  uint8_t result = driver_.test_connection();
+  if (result != 0) {
+    switch (result) {
+    case 1:
+      error_ = "stepper_loose_connection";
+      break;
+    case 2:
+      error_ = "stepper_no_power";
+      break;
+    }
+    return false;
+  }
+  return true;
+}
+
 void Pump::pulse(Reading &result) {
   error_ = nullptr;
   result = {};
