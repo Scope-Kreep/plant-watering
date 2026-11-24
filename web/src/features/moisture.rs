@@ -100,19 +100,23 @@ pub async fn moisture_charts(cx: &Cx, range: String) -> Result<impl View> {
             let pct = series(&pct, &w, Some((0.0, 100.0)), "%", 0, true);
             let spread = series(&spread, &w, None, "", 0, false);
 
+            let (x_start, x_end) = (w.start_label(), w.end_label());
+
             let token = emit! {
                 <div class="grid gap-4 md:grid-cols-2">
                     line_chart(
                         title: "Soil moisture",
                         description: "Average per time bucket",
                         series: &pct,
-                        window: &w
+                        x_start: x_start.as_str(),
+                        x_end: x_end.as_str()
                     )
                     line_chart(
                         title: "Sensor spread",
                         description: "spread, averaged per time bucket",
                         series: &spread,
-                        window: &w
+                        x_start: x_start.as_str(),
+                        x_end: x_end.as_str()
                     )
                 </div>
             }?;
